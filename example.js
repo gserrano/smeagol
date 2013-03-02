@@ -14,12 +14,16 @@ smeagol.configure({
             }
         }
     },
+    log : true,
+    continuous : true,
     callback : function(result){
+    	console.log('callback');
         console.log(result);
     }
 })
 
 /* Get info */
-smeagol.crawl({
+var content = smeagol.crawl({
 	uri : 'http://andafter.org/publicacoes/entrevista-de-emprego-unica.html'
 })
+
