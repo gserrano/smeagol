@@ -1,0 +1,1 @@
+var smeagol = require('smeagol');
