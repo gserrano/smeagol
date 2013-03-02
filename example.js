@@ -4,7 +4,7 @@ var smeagol = require('smeagol');
 
 /* Create Smeagol configuration */
 smeagol.configure({
-    patterns : {
+    patterns : { // Create patterns to URLs and content selectors to crawl
         'http://andafter.org/publicacoes/([^/].)*?' : {
             id : 'posts',
             find : {
@@ -14,9 +14,10 @@ smeagol.configure({
             }
         }
     },
-    log : true,
-    continuous : true,
-    callback : function(result){
+    log : true, // Log smeagol-log.txt file
+    continuous : true, // Get all pages that url match pattern_to_crawl and automatic crawl this pages
+    pattern_to_crawl : 'http://andafter.org/([^/].)*?', // Continuous crawling will get url's that match this REGEX
+    callback : function(result){ // Execute when finish the crawl function
     	console.log('callback');
         console.log(result);
     }
