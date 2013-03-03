@@ -20,11 +20,14 @@ smeagol.configure({
     pattern_to_crawl : 'http://andafter.org/publicacoes/([^/].)*?', // Continuous crawling will get url's that match this REGEX
     callback : function(result){ // Execute when finish the crawl function
     	// console.log('callback');
-        console.log(result);
+
+    	log.write(JSON.stringify(result)+'\r\n');
+
+        // console.log(result);
     }
 })
 
 /* Get info */
 var content = smeagol.crawl({
-	uri : 'http://andafter.org/publicacoes/entrevista-de-emprego-unica.html'
+	uri : 'http://andafter.org/'
 })
