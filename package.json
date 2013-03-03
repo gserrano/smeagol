@@ -1,0 +1,32 @@
+{
+  "name": "smeagol",
+  "version": "0.0.1",
+  "description": "NodeJs HTTP crawler",
+  "homepage": [
+    "https://github.com/gserrano/smeagol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gserrano/smeagol"
+  },
+  "keywords": [
+    "crawler"
+  ],
+  "author": {
+    "name": "Guilherme Serrano",
+    "email": "contato@guilhermeserrano.com.br"
+  },
+  "contributors": [
+    {
+      "name": "Guilherme Serrano",
+      "email": "contato@guilhermeserrano.com.br"
+    }
+  ],
+  "maintainers": "Guilherme Serrano <contato@guilhermeserrano.com.br>",
+  "dependencies": {
+    "fs":"0.0.0",
+    "jsdom":"0.5.1"
+  },
+  "_id": "smeagol@0.0.1",
+  "_from": "smeagol"
+}

@@ -2,9 +2,9 @@
 
 NodeJS crawler module.
 
-## Require ##
-- fs
-- jsdom
+## Dependencies ##
+    npm install
+
 
 ## How to use ##
 
