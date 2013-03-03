@@ -1,6 +1,7 @@
 require.main.paths.unshift('/usr/local/lib/node_modules/');
 
-var smeagol = require('smeagol');
+var smeagol = require('smeagol'),
+	fs = require('fs');
 
 /* Create Smeagol configuration */
 smeagol.configure({
@@ -14,16 +15,14 @@ smeagol.configure({
             }
         }
     },
+    limit: 2,
     log : true, // Log smeagol-log.txt file
     continuous : true, // Get all pages that url match pattern_to_crawl and automatic crawl this pages
     domain : 'http://andafter.org',
     pattern_to_crawl : 'http://andafter.org/publicacoes/([^/].)*?', // Continuous crawling will get url's that match this REGEX
     callback : function(result){ // Execute when finish the crawl function
-    	// console.log('callback');
-
-    	log.write(JSON.stringify(result)+'\r\n');
-
-        // console.log(result);
+        file = fs.createWriteStream('smeagol-result.txt', {'flags': 'a'});
+		file.write(JSON.stringify(result)+'\r\n');
     }
 })
 
