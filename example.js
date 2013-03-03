@@ -16,9 +16,10 @@ smeagol.configure({
     },
     log : true, // Log smeagol-log.txt file
     continuous : true, // Get all pages that url match pattern_to_crawl and automatic crawl this pages
-    pattern_to_crawl : 'http://andafter.org/([^/].)*?', // Continuous crawling will get url's that match this REGEX
+    domain : 'http://andafter.org',
+    pattern_to_crawl : 'http://andafter.org/publicacoes/([^/].)*?', // Continuous crawling will get url's that match this REGEX
     callback : function(result){ // Execute when finish the crawl function
-    	console.log('callback');
+    	// console.log('callback');
         console.log(result);
     }
 })
@@ -27,4 +28,3 @@ smeagol.configure({
 var content = smeagol.crawl({
 	uri : 'http://andafter.org/publicacoes/entrevista-de-emprego-unica.html'
 })
-
