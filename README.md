@@ -3,11 +3,10 @@
 NodeJS crawler module.
 
 ## Dependencies ##
-    npm install
+    npm install cheerio
 
 
 ## How to use ##
-
 
 ### Require Smeagol ###
     var smeagol = require('smeagol');
@@ -17,31 +16,35 @@ NodeJS crawler module.
 You can create url patterns to extract different contents from different URL patterns. In find you use jQuery selectors to get your content, really simple, huh? :)
 
     smeagol.configure({
-        patterns : { // Create patterns to URLs and content selectors to crawl
-            'http://andafter.org/publicacoes/([^/].)*?' : {
-                id : 'posts',
+        crawl : [
+            {
+                pattern_url : '^http://eucompraria.com.br/produto/(.*)?$',
+                id : 'products',
+                each_item : '.product-item',
                 find : {
-                    id      : '("h1 a").attr("href")',
-                    name    : '("h1 a").html()',
-                    olho    : '(".olho").html()'
+                    id      : '$(".product-title a").attr("href")',
+                    title    : '$(".product-title").text()',
+                    price    : '$(".item_price").attr("data-price")'
+                },
+                callback : function(result){
+                    console.log(result);
+                    return result;
                 }
             }
-        },
-        limit: 2,
-        log : true, // Log smeagol-log.txt file
+        ],
+        log : true, // Log urls in smeagol-log.txt file
+        limit: 3, //max pages to crawl
         continuous : true, // Get all pages that url match pattern_to_crawl and automatic crawl this pages
-        domain : 'http://andafter.org',
-        pattern_to_crawl : 'http://andafter.org/publicacoes/([^/].)*?', // Continuous crawling will get url's that match this REGEX
-        callback : function(result){ // Execute when finish the crawl function
-            file = fs.createWriteStream('smeagol-result.txt', {'flags': 'a'});
-            file.write(JSON.stringify(result)+'\r\n');
+        domain : 'http://eucompraria.com.br',
+        pattern_to_crawl : '^http://eucompraria.com.br/produto/(.*)?$', 
+        callback : function(results){
+            console.log(results);
         }
     })
-
 
 ### Crawl ###
 Just start crawling!
 
-    smeagol.crawl({
-    	uri : 'http://andafter.org/publicacoes/entrevista-de-emprego-unica.html'
-    })
+    var content = smeagol.crawl({
+        uri : 'http://eucompraria.com.br/'
+    });
