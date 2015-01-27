@@ -2,8 +2,8 @@
 
 NodeJS crawler module.
 
-## Dependencies ##
-    npm install cheerio
+## Install smeagol ##
+    npm install smeagol
 
 
 ## How to use ##
