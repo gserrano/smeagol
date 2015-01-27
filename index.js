@@ -108,6 +108,11 @@ exports.crawl = function(obj){
 									}
 								}
 
+								if(settings.log == true){
+									log = fs.createWriteStream('smeagol-log.txt', {'flags': 'a'});
+									log.write(temp_obj+'\r\n');
+								}
+
 							})
 						}
 

@@ -1,6 +1,6 @@
-require.main.paths.unshift('/usr/local/lib/node_modules/');
+// require.main.paths.unshift('/usr/local/lib/');
 
-var smeagol = require('smeagol');
+var smeagol = require('./index.js');
 
 
 /* Create Smeagol configuration */
