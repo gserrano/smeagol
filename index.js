@@ -7,6 +7,7 @@ module.paths.unshift('/usr/local/lib/node_modules/');
 var fs = require('fs');
 var http = require('http');
 var cheerio = require("cheerio");
+var q = require('q');
 
 var settings,
 	crawled,
@@ -46,7 +47,8 @@ exports.crawl = function(obj){
 	this_path = this_path.join('/');
 
 
-	download(obj.uri, function(data) {
+	download(obj.uri)
+	.then(function(data) {
 		if (data) {
 			var $ = cheerio.load(data);
 
@@ -147,6 +149,8 @@ exports.crawl = function(obj){
 
 
 		}
+	}, function(err) {
+		//error handler
 	});
 
 }
@@ -160,7 +164,10 @@ function validUrl(url){
 }
 
 
-function download(url, callback) {
+function download(url) {
+
+	var deferred = q.defer();
+
 	http.get(url, function(res) {
 		var data = "";
 		res.setEncoding('binary')
@@ -168,9 +175,10 @@ function download(url, callback) {
 		  data += chunk;
 	});
 	res.on("end", function() {
-		callback(data);
+		deferred.resolve(data);
 	});
-	}).on("error", function() {
-		callback(null);
+	}).on("error", function(err) {
+		defer.reject(err);
 	});
+	return deferred.promise;
 }
