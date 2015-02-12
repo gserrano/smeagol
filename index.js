@@ -157,10 +157,7 @@ exports.crawl = function(obj){
 
 function validUrl(url){
     var urlregex = new RegExp("^(http:\/\/(www.)?|https:\/\/(www.)?|ftp:\/\/(www.)?){1}([0-9A-Za-z]+\.)");
-    if (urlregex.test(url)) {
-        return true;
-    }
-    return false;
+    return urlregex.test(url);
 }
 
 
