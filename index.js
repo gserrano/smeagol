@@ -166,10 +166,11 @@ function validUrl(url){
 
 function download(url) {
 
-	var deferred = q.defer();
+	var deferred = q.defer(),
+		data = "";
 
 	http.get(url, function(res) {
-		var data = "";
+		
 		res.setEncoding('binary')
 		res.on('data', function (chunk) {
 		  data += chunk;
