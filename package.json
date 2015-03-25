@@ -26,6 +26,7 @@
     "node": ">= 0.10"
   },
   "dependencies": {
-    "cheerio": "0.18.0"
+    "cheerio": "0.18.0",
+    "q": "^1.1.2"
   }
 }
