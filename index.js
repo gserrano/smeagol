@@ -27,10 +27,11 @@ exports.configure = function(config){
 
 exports.crawl = function(obj){
 
-	console.log('Crawl: '+obj.uri);
-
-	if(settings.log == true){
-		log = fs.createWriteStream('smeagol-log.txt', {'flags': 'a'});
+	if(settings.log != ''){
+		if (!fs.existsSync('logs')){
+			fs.mkdirSync('logs');
+		}
+		log = fs.createWriteStream('logs/' + settings.log , {'flags': 'a'});
 		log.write(obj.uri+'\r\n');
 	}
 
