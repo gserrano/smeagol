@@ -1,6 +1,7 @@
 const Smeagol = require('../index.js'),
 	fs = require('fs');
 
+/* Instance crawler */
 let smeagol = new Smeagol(
 	{
 		crawl : [
@@ -14,12 +15,6 @@ let smeagol = new Smeagol(
 					price	: '$(".item_price").attr("data-price")',
 					photo   : '$(".main-photo img").attr("src")',
 					parcela : '$(".installments b").eq(0).html()'
-				},
-				callback : function(result){
-					// result.price = result.price.replace('.', ',');
-					// result.parcela = result.parcela.replace('R$ ', '').replace('.', ',');
-					// console.log(result);
-					return result;
 				}
 			}
 		],
@@ -27,19 +22,22 @@ let smeagol = new Smeagol(
 		limit: 5,
 		continuous : true,
 		domain : 'http://eucompraria.dev',
-		pattern_to_crawl : '^http://eucompraria.dev/produto/(.*)?$', 
-		callback : function(results){
-			if (!fs.existsSync('results')){
-				fs.mkdirSync('results');
-			}
-			file = fs.createWriteStream('results/smeagol-result.json', {'flags': 'a'});
-			file.write(JSON.stringify(results)+'\r\n');
-		}
+		pattern_to_crawl : '^http://eucompraria.dev/produto/(.*)?$'
 	}
 );
 
 
-/* Get info */
-var content = smeagol.crawl({
+/* Start crawling */
+smeagol.crawl({
 	uri : 'http://eucompraria.dev/'
-});
+})
+.on('complete', function(results){
+	if (!fs.existsSync('results')){
+		fs.mkdirSync('results');
+	}
+	file = fs.createWriteStream('results/smeagol-result.json', {'flags': 'a'});
+	file.write(JSON.stringify(results)+'\r\n');
+})
+.on('crawl', function(url, result){
+    console.log('crawl', url, result);
+})

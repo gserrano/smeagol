@@ -8,89 +8,85 @@ const fs = require('fs'),
 	http = require('http'),
 	cheerio = require("cheerio"),
 	q = require('q'),
-	EventEmitter    = require("events").EventEmitter;
+	emmiter    = require("events").EventEmitter;
 
+class Smeagol extends emmiter{
 
+    constructor(settings) {
+    	super();
+		let self = this;
+		console.time('execution');
 
-let Smeagol = function(config){
-	let self = this;
-	console.time('execution');
+		self.settings = settings;
+		self.results = {
+			contents : {}
+		};
+		self.counter = 0;
+		self.running = 0;
+		self.simultaneous = 0;
+		self.maxConcurrency = 5;
 
-	self.settings = config;
-	self.results = {
-		contents : {}
-	};
-	self.counter = 0;
-	self.running = 0;
-	self.simultaneous = 0;
-	self.maxConcurrency = 5;
-
-	self.queue = {
-		crawled : [],
-		toCrawl : [],
-		ignore : [],
-		addUrl : function(url){
-			if(typeof(url) == 'string'){
-				if(url.substring(0,4) != 'http' && url.substring(0,1) != '/'){
-					url = this_path +'/'+ url;
-				}else if(url.substring(0,1) == '/'){
-					url = self.settings.domain + url;
-				}
-				
-				if(self.queue.toCrawl.indexOf(url) < 0 && 
-					self.queue.crawled.indexOf(url) < 0 && 
-					self.queue.ignore.indexOf(url) < 0){
-					var re = new RegExp(self.settings.pattern_to_crawl,'gi');
-					if(validUrl(url) && re.exec(url)){
-						self.queue.toCrawl.push(url);
-					}else{
-						self.queue.ignore.push(url);
+		self.queue = {
+			crawled : [],
+			toCrawl : [],
+			ignore : [],
+			addUrl : function(url){
+				if(typeof(url) == 'string'){
+					if(url.substring(0,4) != 'http' && url.substring(0,1) != '/'){
+						url = this_path +'/'+ url;
+					}else if(url.substring(0,1) == '/'){
+						url = self.settings.domain + url;
+					}
+					
+					if(self.queue.toCrawl.indexOf(url) < 0 && 
+						self.queue.crawled.indexOf(url) < 0 && 
+						self.queue.ignore.indexOf(url) < 0){
+						var re = new RegExp(self.settings.pattern_to_crawl,'gi');
+						if(validUrl(url) && re.exec(url)){
+							self.queue.toCrawl.push(url);
+						}else{
+							self.queue.ignore.push(url);
+						}
 					}
 				}
-			}
-		},
-		getNext : function(){
-			return self.queue.toCrawl[0];
-		},
-		hasNext : function(){
-			return self.queue.toCrawl.length > 0;
-		},
-		crawlNext : function(){
-			console.log('crawlNext');
-			if(self.settings.continuous == true && self.queue.hasNext()){
-				let url = self.queue.getNext();
-				self.queue.updateUrl(url);
-				self.crawl({
-					uri : url
-				});
-			}else{
-				console.timeEnd('execution');
-				console.log('############# I finished, master ################');
-				self.results.crawled = urls_crawled;
-				if(typeof(self.settings.callback) == 'function'){
-					self.settings.callback(self.results);
+			},
+			getNext : function(){
+				return self.queue.toCrawl[0];
+			},
+			hasNext : function(){
+				return self.queue.toCrawl.length > 0;
+			},
+			crawlNext : function(){
+				if(self.settings.continuous == true && self.queue.hasNext()){
+					let url = self.queue.getNext();
+					self.queue.updateUrl(url);
+					self.crawl({
+						uri : url
+					});
+				}else{
+					self.results.crawled = self.queue.crawled;
+					self.emit('complete', self.results);
+					return self.results;
 				}
-				return self.results;
-			}
-		},
-		updateUrl : function(url){
-			self.queue.crawled.push(url);
+			},
+			updateUrl : function(url){
+				self.queue.crawled.push(url);
 
-			if (self.queue.toCrawl.indexOf(url) >= 0){
-				self.queue.toCrawl.splice(self.queue.toCrawl.indexOf(url), 1);
+				if (self.queue.toCrawl.indexOf(url) >= 0){
+					self.queue.toCrawl.splice(self.queue.toCrawl.indexOf(url), 1);
+				}
 			}
 		}
-	}
+    }
 }
 
 
 Smeagol.prototype.crawl = function(obj){
-	console.log('Crawl');
 	let self = this;
+
 	this.simultaneous++;
 	
 	
-
 	if(self.settings.log != ''){
 		if (!fs.existsSync('logs')){
 			fs.mkdirSync('logs');
@@ -101,12 +97,8 @@ Smeagol.prototype.crawl = function(obj){
 
 	/* Testing */ 
 	if(self.settings.limit && self.counter >= self.settings.limit){
-		if(typeof(self.settings.callback) == 'function'){
-			console.log('Finished limit');
-			console.timeEnd('execution');
-			self.settings.callback(self.results);
-		}
-		return;
+		self.emit('complete', self.results);
+		return self;
 	}
 
 	this_path = obj.uri.split('/');
@@ -116,7 +108,6 @@ Smeagol.prototype.crawl = function(obj){
 
 	download(obj.uri)
 	.then(function(data) {
-		console.log('Download finished', data.url)
 		data = data.data;
 		if (data) {
 			var $ = cheerio.load(data);
@@ -150,11 +141,7 @@ Smeagol.prototype.crawl = function(obj){
 								}
 
 								if(!self.results.contents[crawl.id][temp_obj.id]){
-									if(typeof(crawl.callback) == 'function'){
-										self.results.contents[crawl.id][temp_obj.id] = crawl.callback(temp_obj);
-									}else{
-										self.results.contents[crawl.id][temp_obj.id] = temp_obj;
-									}
+									self.emit('crawl', obj.uri, temp_obj);
 								}
 
 								if(self.settings.log == true){
@@ -181,7 +168,7 @@ Smeagol.prototype.crawl = function(obj){
 		console.log('Error: ', error);
 		// Handle any error from all above steps 
 	});
-
+	return self;
 }
 
 function validUrl(url){
@@ -191,8 +178,6 @@ function validUrl(url){
 
 
 function download(url) {
-	console.log('Download:', url);
-
 	var deferred = q.defer(),
 		data = '';
 
