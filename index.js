@@ -4,41 +4,107 @@
 
 module.paths.unshift('/usr/local/lib/node_modules/');
 
-var fs = require('fs');
-var http = require('http');
-var cheerio = require("cheerio");
-var q = require('q');
+const fs = require('fs'),
+	http = require('http'),
+	cheerio = require("cheerio"),
+	q = require('q'),
+	EventEmitter    = require("events").EventEmitter;
 
-var settings,
-	crawled,
-	toCrawl,
-	result,
-	counter = 0;
 
-exports.configure = function(config){
-	settings = config,
-	urls_crawled = [],
-	urls_toCrawl = [],
-	urls_ignore = [],
-	result = {
+
+let Smeagol = function(config){
+	let self = this;
+	console.time('execution');
+
+	self.settings = config;
+	self.results = {
 		contents : {}
 	};
+	self.counter = 0;
+	self.running = 0;
+	self.simultaneous = 0;
+	self.maxConcurrency = 5;
+
+	self.queue = {
+		crawled : [],
+		toCrawl : [],
+		ignore : [],
+		addUrl : function(url){
+			if(typeof(url) == 'string'){
+				if(url.substring(0,4) != 'http' && url.substring(0,1) != '/'){
+					url = this_path +'/'+ url;
+				}else if(url.substring(0,1) == '/'){
+					url = self.settings.domain + url;
+				}
+				
+				if(self.queue.toCrawl.indexOf(url) < 0 && 
+					self.queue.crawled.indexOf(url) < 0 && 
+					self.queue.ignore.indexOf(url) < 0){
+					var re = new RegExp(self.settings.pattern_to_crawl,'gi');
+					if(validUrl(url) && re.exec(url)){
+						self.queue.toCrawl.push(url);
+					}else{
+						self.queue.ignore.push(url);
+					}
+				}
+			}
+		},
+		getNext : function(){
+			return self.queue.toCrawl[0];
+		},
+		hasNext : function(){
+			return self.queue.toCrawl.length > 0;
+		},
+		crawlNext : function(){
+			console.log('crawlNext');
+			if(self.settings.continuous == true && self.queue.hasNext()){
+				let url = self.queue.getNext();
+				self.queue.updateUrl(url);
+				self.crawl({
+					uri : url
+				});
+			}else{
+				console.timeEnd('execution');
+				console.log('############# I finished, master ################');
+				self.results.crawled = urls_crawled;
+				if(typeof(self.settings.callback) == 'function'){
+					self.settings.callback(self.results);
+				}
+				return self.results;
+			}
+		},
+		updateUrl : function(url){
+			self.queue.crawled.push(url);
+
+			if (self.queue.toCrawl.indexOf(url) >= 0){
+				self.queue.toCrawl.splice(self.queue.toCrawl.indexOf(url), 1);
+			}
+		}
+	}
 }
 
-exports.crawl = function(obj){
 
-	if(settings.log != ''){
+Smeagol.prototype.crawl = function(obj){
+	console.log('Crawl');
+	let self = this;
+	this.simultaneous++;
+	
+	
+
+	if(self.settings.log != ''){
 		if (!fs.existsSync('logs')){
 			fs.mkdirSync('logs');
 		}
-		log = fs.createWriteStream('logs/' + settings.log , {'flags': 'a'});
+		log = fs.createWriteStream('logs/' + self.settings.log , {'flags': 'a'});
 		log.write(obj.uri+'\r\n');
 	}
 
 	/* Testing */ 
-	if(settings.limit && counter >= settings.limit){
-		if(typeof(settings.callback) == 'function'){
-			settings.callback(result);
+	if(self.settings.limit && self.counter >= self.settings.limit){
+		if(typeof(self.settings.callback) == 'function'){
+			console.log('Finished limit');
+			console.timeEnd('execution');
+			self.settings.callback(self.results);
 		}
 		return;
 	}
@@ -50,50 +116,30 @@ exports.crawl = function(obj){
 
 	download(obj.uri)
 	.then(function(data) {
+		console.log('Download finished', data.url)
+		data = data.data;
 		if (data) {
 			var $ = cheerio.load(data);
 
 			/* Get all links and "categorize" to continuous crawling */
-		    if(settings.continuous){
+		    if(self.settings.continuous){
 			    $('a').each(function(index){
-			    	var url = $(this).attr('href');
-
-			    	if(typeof(url) == 'string'){
-				    	if(url.substring(0,4) != 'http' && url.substring(0,1) != '/'){
-				    		url = this_path +'/'+ url;
-				    	}else if(url.substring(0,1) == '/'){
-				    		url = settings.domain + url;
-				    	}
-				    	
-				    	if(urls_toCrawl.indexOf(url) < 0 && urls_crawled.indexOf(url) < 0 && urls_ignore.indexOf(url) < 0){
-							var re = new RegExp(settings.pattern_to_crawl,'gi');
-				    		if(validUrl(url) && re.exec(url)){
-				    			urls_toCrawl.push(url);
-				    		}else{
-				    			urls_ignore.push(url);
-				    		}
-				    	}
-			    	}
+			    	self.queue.addUrl($(this).attr('href'));
 			    });
 		    }
 
-
-
-
 		    /* Verify all URL patterns */
-			for(var i in settings['crawl']){
+			for(var i in self.settings['crawl']){
 
-				var crawl = settings['crawl'][i],
+				var crawl = self.settings['crawl'][i],
 					re = new RegExp(crawl.pattern_url,'gi');
 
 
 					/* Get HTML contents for each url pattern */
 					if(re.exec(obj.uri)){
-
-						if(!result.contents[crawl.id]){
-							result.contents[crawl.id] = {};
+						if(!self.results.contents[crawl.id]){
+							self.results.contents[crawl.id] = {};
 						}
-
 
 						var temp_obj = {}
 						if(crawl.each_item){
@@ -103,15 +149,15 @@ exports.crawl = function(obj){
 									temp_obj[selector] = eval(crawl.find[selector]);
 								}
 
-								if(!result.contents[crawl.id][temp_obj.id]){
+								if(!self.results.contents[crawl.id][temp_obj.id]){
 									if(typeof(crawl.callback) == 'function'){
-										result.contents[crawl.id][temp_obj.id] = crawl.callback(temp_obj);
+										self.results.contents[crawl.id][temp_obj.id] = crawl.callback(temp_obj);
 									}else{
-										result.contents[crawl.id][temp_obj.id] = temp_obj;
+										self.results.contents[crawl.id][temp_obj.id] = temp_obj;
 									}
 								}
 
-								if(settings.log == true){
+								if(self.settings.log == true){
 									log = fs.createWriteStream('smeagol-log.txt', {'flags': 'a'});
 									log.write(temp_obj+'\r\n');
 								}
@@ -119,39 +165,21 @@ exports.crawl = function(obj){
 							})
 						}
 
-						counter++;
+						self.counter++;
 					}
 
-					// if(typeof(crawl.callback) == 'function'){
-					// 	crawl.callback(result.contents[crawl.id]);
-					// }
+
 			}
 			/* end patterns */
 
-		    /* Add to crawled urls */
-		    urls_crawled.push(obj.uri);
+		    self.queue.crawlNext();
 
-		    if (urls_toCrawl.indexOf(obj.uri) >= 0){
-		    	urls_toCrawl.splice(urls_toCrawl.indexOf(obj.uri), 1);
-		    }
-
-			if(settings.continuous == true && urls_toCrawl.length > 0){
-				module.exports.crawl({
-					uri : urls_toCrawl[0]
-				});
-			}else{
-				console.log('############# I finished, master ################');
-				result.crawled = urls_crawled;
-				if(typeof(settings.callback) == 'function'){
-					settings.callback(result);
-				}
-				return result;
-			}
-
-
+			self.simultaneous--;
 		}
-	}, function(err) {
-		//error handler
+	})
+	.catch(function (error) {
+		console.log('Error: ', error);
+		// Handle any error from all above steps 
 	});
 
 }
@@ -163,21 +191,23 @@ function validUrl(url){
 
 
 function download(url) {
+	console.log('Download:', url);
 
 	var deferred = q.defer(),
-		data = "";
+		data = '';
 
 	http.get(url, function(res) {
-		
 		res.setEncoding('binary')
 		res.on('data', function (chunk) {
 		  data += chunk;
 	});
 	res.on("end", function() {
-		deferred.resolve(data);
+		deferred.resolve({data : data, url : url});
 	});
 	}).on("error", function(err) {
 		defer.reject(err);
 	});
 	return deferred.promise;
 }
+
+module.exports = Smeagol;
