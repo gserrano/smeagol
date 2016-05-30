@@ -1,50 +1,72 @@
 # Smeagol #
-
-NodeJS crawler module.
+Smeagol is a very simple NodeJS crawler module where you can create url patterns to extract different contents from different pages. 
 
 ## Install smeagol ##
     npm install smeagol
 
-
 ## How to use ##
 
 ### Require Smeagol ###
-    var smeagol = require('smeagol');
+    var Smeagol = require('smeagol');
 
 
-### Configure ###
-You can create url patterns to extract different contents from different URL patterns. In find you use jQuery selectors to get your content, really simple, huh? :)
-
-    smeagol.configure({
-        crawl : [
-            {
-                pattern_url : '^http://eucompraria.com.br/produto/(.*)?$',
-                id : 'products',
-                each_item : '.product-item',
-                find : {
-                    id      : '$(".product-title a").attr("href")',
-                    title    : '$(".product-title").text()',
-                    price    : '$(".item_price").attr("data-price")'
-                },
-                callback : function(result){
-                    console.log(result);
-                    return result;
+### Instance and settings ###
+    let smeagol = new Smeagol(
+        {
+            crawl : [
+                {
+                    pattern_url : '^http://eucompraria.dev/produto/(.*)?$', 
+                    id : 'produtos',
+                    each_item : '.product-item',
+                    find : {
+                        id    : '$("h1 a").text()',
+                        title   : '$("h1 a").text()',
+                        price   : '$(".item_price").attr("data-price")',
+                        photo   : '$(".main-photo img").attr("src")',
+                        parcela : '$(".installments b").eq(0).html()'
+                    }
                 }
-            }
-        ],
-        log : true, // Log urls in smeagol-log.txt file
-        limit: 3, //max pages to crawl
-        continuous : true, // Get all pages that url match pattern_to_crawl and automatic crawl this pages
-        domain : 'http://eucompraria.com.br',
-        pattern_to_crawl : '^http://eucompraria.com.br/produto/(.*)?$', 
-        callback : function(results){
-            console.log(results);
+            ],
+            log : 'smeagol-log.txt',
+            limit: 5,
+            continuous : true,
+            domain : 'http://eucompraria.dev',
+            pattern_to_crawl : '^http://eucompraria.dev/produto/(.*)?$'
         }
-    })
+    );
+
+"pattern_url" define what pages Smeagol will scrap.
+"id" is the identification for the result Smeagol will give for this information group.
+"each_item" is a CSS selector. Smeagol will iterate this selector on the page and extract the data defined in "find".
+"find" is a object with label and CSS selector for each information you want to get from each "each_item".
 
 ### Crawl ###
 Just start crawling!
 
-    var content = smeagol.crawl({
-        uri : 'http://eucompraria.com.br/'
-    });
+    smeagol.crawl({
+        uri : 'http://eucompraria.dev/'
+    })
+
+### Events ###
+Smeagol uses nodeJs events to let you decide what to do when you get the information you want to scrap.
+
+####complete(results)####
+Emitted when Smeagol complete scrapping or scrap the limit pages in settings.
+
+    smeagol.on('complete', function(results){
+        if (!fs.existsSync('results')){
+            fs.mkdirSync('results');
+        }
+        file = fs.createWriteStream('results/smeagol-result.json', {'flags': 'a'});
+        file.write(JSON.stringify(results)+'\r\n');
+    })
+
+####crawl(result)####
+Emitted every item (each_item in setting) Smeagol scrap. 
+
+result is a json object.
+url is the page url where Smeagol scrapped the result.
+
+    smeagol.on('crawl', function(url, result){
+        console.log('crawl', url, result);
+    })
