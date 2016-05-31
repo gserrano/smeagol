@@ -23,7 +23,7 @@
     "url": "https://github.com/gserrano/smeagol/issues"
   },
   "engines": {
-    "node": ">= 0.10"
+    "node": ">=6.0.0"
   },
   "dependencies": {
     "cheerio": "0.18.0",
