@@ -15,7 +15,6 @@ class Smeagol extends emmiter{
     constructor(settings) {
     	super();
 		let self = this;
-		console.time('execution');
 
 		self.settings = settings;
 		self.results = {
@@ -86,7 +85,6 @@ Smeagol.prototype.crawl = function(obj){
 
 	this.simultaneous++;
 	
-	
 	if(self.settings.log != ''){
 		if (!fs.existsSync('logs')){
 			fs.mkdirSync('logs');
@@ -104,7 +102,6 @@ Smeagol.prototype.crawl = function(obj){
 	this_path = obj.uri.split('/');
 	this_path.pop();
 	this_path = this_path.join('/');
-
 
 	download(obj.uri)
 	.then(function(data) {
@@ -125,7 +122,6 @@ Smeagol.prototype.crawl = function(obj){
 				var crawl = self.settings['crawl'][i],
 					re = new RegExp(crawl.pattern_url,'gi');
 
-
 					/* Get HTML contents for each url pattern */
 					if(re.exec(obj.uri)){
 						if(!self.results.contents[crawl.id]){
@@ -140,13 +136,10 @@ Smeagol.prototype.crawl = function(obj){
 									temp_obj[selector] = eval(crawl.find[selector]);
 								}
 
-								if(!self.results.contents[crawl.id][temp_obj.id]){
-									self.emit('crawl', obj.uri, temp_obj);
-								}
 
-								if(self.settings.log == true){
-									log = fs.createWriteStream('smeagol-log.txt', {'flags': 'a'});
-									log.write(temp_obj+'\r\n');
+								if(!self.results.contents[crawl.id][temp_obj.id]){
+									self.results.contents[crawl.id][temp_obj.id] = temp_obj;
+									self.emit('crawl', obj.uri, temp_obj);
 								}
 
 							})
@@ -166,7 +159,6 @@ Smeagol.prototype.crawl = function(obj){
 	})
 	.catch(function (error) {
 		console.log('Error: ', error);
-		// Handle any error from all above steps 
 	});
 	return self;
 }

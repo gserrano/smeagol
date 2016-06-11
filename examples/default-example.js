@@ -28,6 +28,7 @@ let smeagol = new Smeagol(
 
 
 /* Start crawling */
+console.time('execution');
 smeagol.crawl({
 	uri : 'http://eucompraria.dev/'
 })
@@ -37,6 +38,7 @@ smeagol.crawl({
 	}
 	file = fs.createWriteStream('results/smeagol-result.json', {'flags': 'a'});
 	file.write(JSON.stringify(results)+'\r\n');
+	console.timeEnd("execution");
 })
 .on('crawl', function(url, result){
     console.log('crawl', url, result);
