@@ -22,8 +22,7 @@ class Smeagol extends emmiter{
 		};
 		self.counter = 0;
 		self.running = 0;
-		self.simultaneous = 0;
-		self.maxConcurrency = 5;
+		self.openQueue = 0;
 
 		self.queue = {
 			crawled : [],
@@ -57,15 +56,15 @@ class Smeagol extends emmiter{
 			},
 			crawlNext : function(){
 				if(self.settings.continuous == true && self.queue.hasNext()){
-					let url = self.queue.getNext();
-					self.queue.updateUrl(url);
-					self.crawl({
-						uri : url
-					});
-				}else{
-					self.results.crawled = self.queue.crawled;
-					self.emit('complete', self.results);
-					return self.results;
+					for(let i = self.openQueue; i < self.settings.maxConcurrency; i++){
+						if(self.settings.limit && self.counter <= self.settings.limit){
+							let url = self.queue.getNext();
+							self.queue.updateUrl(url);
+							self.crawl({
+								uri : url
+							});
+						}
+					}
 				}
 			},
 			updateUrl : function(url){
@@ -83,7 +82,8 @@ class Smeagol extends emmiter{
 Smeagol.prototype.crawl = function(obj){
 	let self = this;
 
-	this.simultaneous++;
+	self.openQueue++;
+	self.counter++;
 	
 	if(self.settings.log != ''){
 		if (!fs.existsSync('logs')){
@@ -93,18 +93,14 @@ Smeagol.prototype.crawl = function(obj){
 		log.write(obj.uri+'\r\n');
 	}
 
-	/* Testing */ 
-	if(self.settings.limit && self.counter >= self.settings.limit){
-		self.emit('complete', self.results);
-		return self;
-	}
-
 	this_path = obj.uri.split('/');
 	this_path.pop();
 	this_path = this_path.join('/');
 
 	download(obj.uri)
 	.then(function(data) {
+		self.openQueue--;
+
 		data = data.data;
 		if (data) {
 			var $ = cheerio.load(data);
@@ -124,6 +120,7 @@ Smeagol.prototype.crawl = function(obj){
 
 					/* Get HTML contents for each url pattern */
 					if(re.exec(obj.uri)){
+
 						if(!self.results.contents[crawl.id]){
 							self.results.contents[crawl.id] = {};
 						}
@@ -136,7 +133,6 @@ Smeagol.prototype.crawl = function(obj){
 									temp_obj[selector] = eval(crawl.find[selector]);
 								}
 
-
 								if(!self.results.contents[crawl.id][temp_obj.id]){
 									self.results.contents[crawl.id][temp_obj.id] = temp_obj;
 									self.emit('crawl', obj.uri, temp_obj);
@@ -145,16 +141,18 @@ Smeagol.prototype.crawl = function(obj){
 							})
 						}
 
-						self.counter++;
 					}
 
 
 			}
 			/* end patterns */
 
+			/* Complete */ 
+			if(self.settings.limit && self.counter >= self.settings.limit && self.openQueue == 0){
+				self.emit('complete', self.results);
+				return self;
+			}
 		    self.queue.crawlNext();
-
-			self.simultaneous--;
 		}
 	})
 	.catch(function (error) {

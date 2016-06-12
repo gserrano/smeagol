@@ -19,8 +19,9 @@ let smeagol = new Smeagol(
 			}
 		],
 		log : 'smeagol-log.txt',
-		limit: 5,
+		limit: 10,
 		continuous : true,
+		maxConcurrency: 10,
 		domain : 'http://eucompraria.dev',
 		pattern_to_crawl : '^http://eucompraria.dev/produto/(.*)?$'
 	}
@@ -41,5 +42,5 @@ smeagol.crawl({
 	console.timeEnd("execution");
 })
 .on('crawl', function(url, result){
-    console.log('crawl', url, result);
+    // console.log('crawl', url);
 })
