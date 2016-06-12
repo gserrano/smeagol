@@ -86,7 +86,7 @@ Smeagol.prototype.crawl = function(obj){
 	self.openQueue++;
 	self.counter++;
 	
-	if(self.settings.log != ''){
+	if(self.settings.log != undefined && self.settings.log != ''){
 		if (!fs.existsSync('logs')){
 			fs.mkdirSync('logs');
 		}
