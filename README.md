@@ -15,28 +15,26 @@ Smeagol is a very simple NodeJS crawler module where you can create url patterns
         {
             crawl : [
                 {
-                    pattern_url : '^http://eucompraria.dev/produto/(.*)?$', 
-                    id : 'produtos',
-                    each_item : '.product-item',
+                    pattern_url : '^http://g1.globo.com/economia/noticia/(.*)?$', 
+                    id : 'news',
+                    each_item : '#glb-materia',
                     find : {
-                        id    : '$("h1 a").text()',
-                        title   : '$("h1 a").text()',
-                        price   : '$(".item_price").attr("data-price")',
-                        photo   : '$(".main-photo img").attr("src")',
-                        parcela : '$(".installments b").eq(0).html()'
+                        id    : '$(".share-bar").attr("data-url")',
+                        title   : '$(".entry-title").text()'
                     }
                 }
             ],
-            log : 'smeagol-log.txt',
-            limit: 5,
+            limit: 6,
             continuous : true,
-            domain : 'http://eucompraria.dev',
-            pattern_to_crawl : '^http://eucompraria.dev/produto/(.*)?$'
+            maxConcurrency: 6,
+            domain : 'http://g1.globo.com/',
+            pattern_to_crawl : '^http://g1.globo.com/economia/noticia/(.*)?$'
         }
     );
 
+
 "pattern_url" define what pages Smeagol will scrap.
-"id" is the identification for the result Smeagol will give for this information group.
+"id" is the identification for the result group in Smeagol results.
 "each_item" is a CSS selector. Smeagol will iterate this selector on the page and extract the data defined in "find".
 "find" is a object with label and CSS selector for each information you want to get from each "each_item".
 
@@ -44,9 +42,8 @@ Smeagol is a very simple NodeJS crawler module where you can create url patterns
 Just start crawling!
 
     smeagol.crawl({
-        uri : 'http://eucompraria.dev/'
+        uri : 'http://g1.globo.com/economia/'
     })
-
 ### Events ###
 Smeagol uses nodeJs events to let you decide what to do when you get the information you want to scrap.
 
@@ -54,11 +51,8 @@ Smeagol uses nodeJs events to let you decide what to do when you get the informa
 Emitted when Smeagol complete scrapping or scrap the limit pages in settings.
 
     smeagol.on('complete', function(results){
-        if (!fs.existsSync('results')){
-            fs.mkdirSync('results');
-        }
-        file = fs.createWriteStream('results/smeagol-result.json', {'flags': 'a'});
-        file.write(JSON.stringify(results)+'\r\n');
+        console.log(results);
+        console.log('Finished');
     })
 
 ####crawl(result)####
