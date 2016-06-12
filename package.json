@@ -1,7 +1,7 @@
 {
   "name": "smeagol",
-  "version": "0.1.0",
-  "description": "A easy to use NodeJS HTTP web-crawler.",
+  "version": "0.2.0",
+  "description": "A easy to use NodeJS http/https web-crawler.",
   "author": {
     "name": "Guilherme Serrano",
     "email": "contato@guilhermeserrano.com.br",
