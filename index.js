@@ -6,6 +6,7 @@ module.paths.unshift('/usr/local/lib/node_modules/');
 
 const fs = require('fs'),
 	http = require('http'),
+	https = require('https'),
 	cheerio = require("cheerio"),
 	q = require('q'),
 	emmiter    = require("events").EventEmitter;
@@ -97,7 +98,7 @@ Smeagol.prototype.crawl = function(obj){
 	this_path.pop();
 	this_path = this_path.join('/');
 
-	download(obj.uri)
+	self.download(obj.uri)
 	.then(function(data) {
 		self.openQueue--;
 
@@ -156,33 +157,48 @@ Smeagol.prototype.crawl = function(obj){
 		}
 	})
 	.catch(function (error) {
-		console.log('Error: ', error);
+		self.emit('error', error);
 	});
 	return self;
 }
 
-function validUrl(url){
-    var urlregex = new RegExp("^(http:\/\/(www.)?|https:\/\/(www.)?|ftp:\/\/(www.)?){1}([0-9A-Za-z]+\.)");
-    return urlregex.test(url);
-}
+Smeagol.prototype.download = function(url){
+	let self = this,
+		deferred = q.defer(),
+		data = '',
+		protocol = defineProtocol(url);
 
+	if(protocol != 'http' && protocol != 'https'){
+		deferred.reject(`Protocol ${protocol} not supported. Error to crawl ${url}`);
+		return deferred.promise;
+	}
 
-function download(url) {
-	var deferred = q.defer(),
-		data = '';
+	protocol = (protocol == 'http') ? http : https;
 
-	http.get(url, function(res) {
+	protocol.get(url, function(res) {
 		res.setEncoding('binary')
 		res.on('data', function (chunk) {
 		  data += chunk;
 	});
-	res.on("end", function() {
+	res.on('end', function() {
 		deferred.resolve({data : data, url : url});
 	});
-	}).on("error", function(err) {
-		defer.reject(err);
+	}).on('error', function(err) {
+		deferred.reject(err);
 	});
 	return deferred.promise;
 }
+
+function validUrl(url){
+	let urlRegex = new RegExp('^(http:\/\/(www.)?|https:\/\/(www.)?|ftp:\/\/(www.)?){1}([0-9A-Za-z]+\.)');
+	return urlRegex.test(url);
+}
+
+function defineProtocol(url){
+	let protocolRegex = /^(https?):\/\//i;
+	return url.match(protocolRegex)[1]
+}
+
+
 
 module.exports = Smeagol;

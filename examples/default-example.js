@@ -6,7 +6,7 @@ let smeagol = new Smeagol(
 	{
 		crawl : [
 			{
-				pattern_url : '^http://eucompraria.dev/produto/(.*)?$', 
+				pattern_url : '^https://eucompraria.com.br/produto/(.*)?$', 
 				id : 'produtos',
 				each_item : '.product-item',
 				find : {
@@ -19,11 +19,11 @@ let smeagol = new Smeagol(
 			}
 		],
 		log : 'smeagol-log.txt',
-		limit: 10,
+		limit: 6,
 		continuous : true,
-		maxConcurrency: 10,
-		domain : 'http://eucompraria.dev',
-		pattern_to_crawl : '^http://eucompraria.dev/produto/(.*)?$'
+		maxConcurrency: 3,
+		domain : 'https://eucompraria.com.br',
+		pattern_to_crawl : '^https://eucompraria.com.br/produto/(.*)?$'
 	}
 );
 
@@ -31,7 +31,7 @@ let smeagol = new Smeagol(
 /* Start crawling */
 console.time('execution');
 smeagol.crawl({
-	uri : 'http://eucompraria.dev/'
+	uri : 'https://eucompraria.com.br/'
 })
 .on('complete', function(results){
 	if (!fs.existsSync('results')){
@@ -43,4 +43,7 @@ smeagol.crawl({
 })
 .on('crawl', function(url, result){
     // console.log('crawl', url);
+})
+.on('error', function(err){
+	console.log(err);
 })
