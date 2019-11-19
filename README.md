@@ -47,7 +47,7 @@ Just start crawling!
 ### Events ###
 Smeagol uses nodeJs events to let you decide what to do when you get the information you want to scrap.
 
-####complete(results)####
+#### complete(results) ####
 Emitted when Smeagol complete scrapping or scrap the limit pages in settings.
 
     smeagol.on('complete', function(results){
@@ -55,7 +55,7 @@ Emitted when Smeagol complete scrapping or scrap the limit pages in settings.
         console.log('Finished');
     })
 
-####crawl(result)####
+#### crawl(result) ####
 Emitted every item (each_item in setting) Smeagol scrap. 
 
 result is a json object.
